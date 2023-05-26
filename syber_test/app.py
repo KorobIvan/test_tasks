@@ -3,68 +3,54 @@ from docopt import docopt
 
 usage = '''
 Usage:
-app.py list <file> [dir]
-app.py get <file> <name> [dir]
+app.py list <file> [<dir>]
+app.py get <file> <name> [<dir>]
 '''
 
-with open('tasks.yaml') as f:
-    tasks = yaml.safe_load(f)
-
-with open('builds.yaml') as f:
-    builds = yaml.safe_load(f)
-
-def list_from_file(file):
-    if file == 'tasks':
-        print('List of available builds:')
-        for i in tasks['tasks']:
-            print(f'* {i["name"]}')
-    elif file == 'builds':
-        print('List of available builds:')
-        for i in builds['builds']:
-            print(f'* {i["name"]}')
-    else:
-        print('Typy of work NOT found!')
+def list_from_file(work_type, path=''):
+    try:
+        with open(f'{path}{work_type}.yaml') as f:
+            file = yaml.safe_load(f)
+        work = 'List of available builds:'
+        for i in file[work_type]:
+            work += f'\n* {i["name"]}'
+        return work
+    except FileNotFoundError:
+        return 'File not found!'
 
 
-def get_info(file, name):
-    if file == 'tasks':
-        for i in tasks['tasks']:
+def get_info(work_type, name, path=''):
+    try: 
+        with open(f'{path}{work_type}.yaml') as f:
+            file = yaml.safe_load(f)  
+        for i in file[work_type]:
+            data = list(i.keys())
             if i['name'] == name:
-                print('Task info:')
-                print(f'* name: {i["name"]}\n\
-* dependencies: {", ".join(i["dependencies"])}')
-                break
+                return f'Task info:\n* name: {i["name"]}\n\
+* {data[1]}: {", ".join(i[data[1]])}'
         else:
-            print('Name eror')   
-    elif file == 'builds':
-        for i in builds['builds']:
-            if i['name'] == name:
-                print('Task info:')
-                print(f'* name: {i["name"]}\n\
-* tasks: {", ".join(i["tasks"])}')
-                break
-        else:
-            print('Name eror')
-             
-    else:
-        print('Type of work NOT found!')        
+            return 'Name eror!'         
+    except FileNotFoundError:
+        return 'File not found!'
 
 
-args = docopt(usage)
+def main():
+    try:
+        args = docopt(usage)
+        path = ''
+        
+        if args['<dir>'] != None:
+            path = args['<dir>'] + '\\'
+
+        if args['list']:
+            if args['<file>'] != None:
+                return list_from_file(args['<file>'], path)
+        elif args['get']:
+            if args['<file>'] != None and args['<name>'] != None:
+                return get_info(args['<file>'], args['<name>'], path)
+    except:
+        return 'Command not found!'
 
 
-
-
-'''if args['<path>'] != None:
-    path = args['<path>']'''
-
-
-
-if args['list']:
-    if args['<file>'] != None:
-        list_from_file(args['<file>'])
-elif args['get']:
-    if args['<file>'] != None and args['<name>'] != None:
-        get_info(args['<file>'], args['<name>'])
-
-
+if __name__ == '__main__':
+    print(main())
